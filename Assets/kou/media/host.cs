@@ -32,7 +32,7 @@ public class WebcamImageReceiver : MonoBehaviour
         {
             while (true)
             {
-                // 最初に画像データのサイズを読み取る
+                // サイズ情報を受信する
                 byte[] sizeBytes = new byte[4];
                 int bytesRead = 0;
                 while (bytesRead < sizeBytes.Length)
@@ -46,32 +46,26 @@ public class WebcamImageReceiver : MonoBehaviour
                     bytesRead += read;
                 }
 
+                // 受信したサイズ情報を整数に変換する
                 int size = BitConverter.ToInt32(sizeBytes, 0);
-                size = System.Net.IPAddress.NetworkToHostOrder(size); // バイト順序の変換
                 if (size <= 0)
                 {
                     Debug.LogError("Invalid image size received: " + size);
                     yield break;
                 }
-                Debug.Log("Receiving image of size: " + size);
 
+                // 画像データを受信する
                 byte[] imageData = new byte[size];
                 bytesRead = 0;
-                while (bytesRead < imageData.Length)
+                while (bytesRead < size)
                 {
-                    int read = stream.Read(imageData, bytesRead, imageData.Length - bytesRead);
+                    int read = stream.Read(imageData, bytesRead, size - bytesRead);
                     if (read == 0)
                     {
                         Debug.LogError("Image data is incomplete");
                         yield break;
                     }
                     bytesRead += read;
-                }
-
-                if (bytesRead < size)
-                {
-                    Debug.LogError("Image data is incomplete");
-                    yield break;
                 }
 
                 // 画像データを Texture2D にロード

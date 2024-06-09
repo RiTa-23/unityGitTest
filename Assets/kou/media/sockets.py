@@ -48,6 +48,8 @@ def send_image(conn):
 
             time.sleep(0.1)  # 送信間隔を少し空けることで、Unity クライアントが受信しやすくする
 
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt detected. Exiting...")
     except Exception as e:
         print(f"Error: {e}")
     finally:

@@ -523,7 +523,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rawImage: {fileID: 1555941944}
-  serverIP: 192.168.1.16
+  serverIP: 192.168.0.10
   serverPort: 65432
 --- !u!1 &1688291668
 GameObject:
@@ -892,7 +892,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae3c4af3930cc6c45a729a82a6b3ff54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  host: 192.168.1.16
+  host: 192.168.0.10
   port: 65433
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

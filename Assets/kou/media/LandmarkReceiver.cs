@@ -1,14 +1,15 @@
 using System;
-using System.Collections;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using UnityEngine;
 
 public class LandmarkReceiver : MonoBehaviour
 {
-    public string host = "192.168.1.16"; // PythonサーバーのIPアドレス
-    public int port = 65432; // Pythonサーバーのポート番号
+    private TcpClient client;
+    private NetworkStream stream;
+    private byte[] buffer = new byte[1024];
+    public string serverIp = "127.0.0.1";
+    public int serverPort = 65433;
 
     void Start()
     {
@@ -19,42 +20,68 @@ public class LandmarkReceiver : MonoBehaviour
     {
         try
         {
-            // Pythonサーバーに接続
-            TcpClient client = new TcpClient(host, port);
-
-            // データを受信するストリームを取得
-            NetworkStream stream = client.GetStream();
-
-            // データ受信用のバッファー
-            byte[] buffer = new byte[4096];
-
-            // データ受信ループ
-            while (true)
-            {
-                // データを受信
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                
-                // 受信したバイト数が0の場合は接続が切れたことを示すため、ループを終了する
-                if (bytesRead == 0)
-                {
-                    Debug.LogError("Connection closed by the server11.");
-                    break;
-                }
-
-                // 受信したデータを文字列に変換
-                string receivedData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-
-                // 受信したJSONデータをコンソールに表示
-                Debug.Log("Received JSON data from Python: " + receivedData);
-            }
-
-            // 接続を閉じる
-            stream.Close();
-            client.Close();
+            client = new TcpClient(serverIp, serverPort);
+            stream = client.GetStream();
+            Debug.Log("Connected to the server");
+            BeginRead();
         }
-        catch (Exception e)
+        catch (SocketException socketEx)
         {
-            Debug.LogError("Failed to connect to server: " + e);
+            Debug.LogError($"SocketException: {socketEx.Message}");
         }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Exception: {ex.Message}");
+        }
+    }
+
+    void BeginRead()
+    {
+        if (stream != null && stream.CanRead)
+        {
+            stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(OnRead), null);
+        }
+        else
+        {
+            Debug.LogError("Network stream is not readable.");
+        }
+    }
+
+    void OnRead(IAsyncResult ar)
+    {
+        try
+        {
+            int bytesRead = stream.EndRead(ar);
+            if (bytesRead > 0)
+            {
+                string receivedData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Debug.Log($"Received data: {receivedData}");
+                // 再度読み込みを開始
+                BeginRead();
+            }
+            else
+            {
+                Debug.LogError("Server closed the connection.");
+                CloseConnection();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"OnRead Exception: {ex.Message}");
+            CloseConnection();
+        }
+    }
+
+    void CloseConnection()
+    {
+        if (stream != null)
+            stream.Close();
+        if (client != null)
+            client.Close();
+    }
+
+    void OnApplicationQuit()
+    {
+        CloseConnection();
     }
 }
